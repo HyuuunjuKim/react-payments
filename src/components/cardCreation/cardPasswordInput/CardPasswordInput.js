@@ -14,20 +14,39 @@ const transparentInputStyles = {
   textAlign: 'center',
 };
 
-const isValidInput = cardPassword => {
-  return Object.values(cardPassword).every(
-    cardPassword => cardPassword.length === CARD_PASSWORD_INPUT.LENGTH && !isNaN(cardPassword)
-  );
-};
-
-const CardPasswordInput = memo(({ cardPassword, setCardPassword, isValidCardPassword, setValidCardPassword }) => {
+const CardPasswordInput = ({ cardPassword, setCardPassword, isValidCardPassword }) => {
   const [isModalOpened, setModalOpen] = useState(false);
+  const [pressedKeyList, setPressedKeyList] = useState([]);
 
   const $input1 = useRef(null);
 
   useEffect(() => {
-    setValidCardPassword(isValidInput(cardPassword));
-  }, [setValidCardPassword, cardPassword]);
+    const lastPressedKey = pressedKeyList.slice(-1)[0] || '';
+
+    switch (lastPressedKey) {
+      case '확인':
+        setModalOpen(false);
+
+        break;
+      case '전체삭제':
+        setCardPassword({
+          [CARD_PASSWORD_INPUT.NAME.FIRST]: '',
+          [CARD_PASSWORD_INPUT.NAME.SECOND]: '',
+        });
+
+        break;
+      default:
+        if (cardPassword[CARD_PASSWORD_INPUT.NAME.FIRST] === '') {
+          setCardPassword(prevState => ({ ...prevState, [CARD_PASSWORD_INPUT.NAME.FIRST]: lastPressedKey }));
+        } else if (cardPassword[CARD_PASSWORD_INPUT.NAME.SECOND] === '') {
+          setCardPassword(prevState => ({ ...prevState, [CARD_PASSWORD_INPUT.NAME.SECOND]: lastPressedKey }));
+        } else {
+          setModalOpen(false);
+        }
+
+        break;
+    }
+  }, [pressedKeyList]);
 
   const handleInputChange = ({ target }) => {
     setCardPassword(prevState => ({ ...prevState, [target.name]: target.value }));
@@ -72,22 +91,16 @@ const CardPasswordInput = memo(({ cardPassword, setCardPassword, isValidCardPass
         </Styled.Container>
       </div>
       {isModalOpened && (
-        <VirtualKeyboardModal
-          closeModal={() => setModalOpen(false)}
-          currentInput="cardPassword"
-          state={cardPassword}
-          setState={setCardPassword}
-        />
+        <VirtualKeyboardModal closeModal={() => setModalOpen(false)} setPressedKeyList={setPressedKeyList} />
       )}
     </>
   );
-});
+};
 
 CardPasswordInput.propTypes = {
   cardPassword: PropTypes.object.isRequired,
   setCardPassword: PropTypes.func.isRequired,
   isValidCardPassword: PropTypes.bool.isRequired,
-  setValidCardPassword: PropTypes.func.isRequired,
 };
 
-export default CardPasswordInput;
+export default memo(CardPasswordInput);

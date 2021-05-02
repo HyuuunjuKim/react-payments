@@ -13,7 +13,38 @@ import CardPasswordInput from '../../components/cardCreation/cardPasswordInput/C
 import Styled from './style';
 import { COLOR } from '../../constants/color';
 import { PAGE } from '../../constants/page';
-import { CARD_NUMBER_INPUT, CARD_PASSWORD_INPUT, EXPIRED_DATE_INPUT } from '../../constants/input';
+import {
+  CARD_NUMBER_INPUT,
+  CARD_OWNER_INPUT,
+  CARD_PASSWORD_INPUT,
+  EXPIRED_DATE_INPUT,
+  SECURITY_CODE_INPUT,
+} from '../../constants/input';
+import { isFilledAllNumber } from '../../utils';
+
+const isValidCardNumberInput = cardNumber => {
+  return Object.values(cardNumber).every(cardNumber => isFilledAllNumber(cardNumber, CARD_NUMBER_INPUT.LENGTH));
+};
+const isValidMonthInput = cardExpiredDate => {
+  const month = Number(cardExpiredDate.month);
+
+  return (
+    EXPIRED_DATE_INPUT.RANGE.MONTH.MIN <= month &&
+    month <= EXPIRED_DATE_INPUT.RANGE.MONTH.MAX &&
+    isFilledAllNumber(cardExpiredDate.month, EXPIRED_DATE_INPUT.LENGTH)
+  );
+};
+const isValidYearInput = cardExpiredDate => {
+  const year = Number(cardExpiredDate.year);
+
+  return (
+    EXPIRED_DATE_INPUT.RANGE.YEAR.MIN <= year && isFilledAllNumber(cardExpiredDate.year, EXPIRED_DATE_INPUT.LENGTH)
+  );
+};
+const isValidCardOwnerInput = cardOwner => cardOwner.length <= CARD_OWNER_INPUT.LENGTH.MAX;
+const isValidSecurityCodeInput = securityCode => isFilledAllNumber(securityCode, SECURITY_CODE_INPUT.LENGTH);
+const isValidCardPasswordInput = cardPassword =>
+  Object.values(cardPassword).every(cardPassword => isFilledAllNumber(cardPassword, CARD_PASSWORD_INPUT.LENGTH));
 
 const cardListRef = firestore.collection('cardList');
 
@@ -54,11 +85,12 @@ const CardCreationPage = ({ targetCardId, setCurrentPage, setNewCardInfo, setTar
     }
   }, []);
 
-  const [isValidCardNumber, setValidCardNumber] = useState(false);
-  const [isValidCardExpiredDate, setValidCardExpiredDate] = useState(false);
-  const [isValidCardOwner, setValidCardOwner] = useState(false);
-  const [isValidSecurityCode, setValidSecurityCode] = useState(false);
-  const [isValidCardPassword, setValidCardPassword] = useState(false);
+  const isSelectedCardInfo = !!selectedCardInfo.id;
+  const isValidCardNumber = isValidCardNumberInput(cardNumber) && isSelectedCardInfo;
+  const isValidCardExpiredDate = isValidMonthInput(cardExpiredDate) && isValidYearInput(cardExpiredDate);
+  const isValidCardOwner = isValidCardOwnerInput(cardOwner);
+  const isValidSecurityCode = isValidSecurityCodeInput(securityCode);
+  const isValidCardPassword = isValidCardPasswordInput(cardPassword);
 
   const isValidAllInput =
     isValidCardNumber && isValidCardExpiredDate && isValidCardOwner && isValidSecurityCode && isValidCardPassword;
@@ -98,32 +130,27 @@ const CardCreationPage = ({ targetCardId, setCurrentPage, setNewCardInfo, setTar
             cardNumber={cardNumber}
             setCardNumber={setCardNumber}
             isValidCardNumber={isValidCardNumber}
-            setValidCardNumber={setValidCardNumber}
+            isSelectedCardInfo={isSelectedCardInfo}
             setSelectedCardInfo={setSelectedCardInfo}
-            selectedCardInfo={selectedCardInfo}
           />
           <ExpiredDateInput
             cardExpiredDate={cardExpiredDate}
             setCardExpiredDate={setCardExpiredDate}
             isValidCardExpiredDate={isValidCardExpiredDate}
-            setValidCardExpiredDate={setValidCardExpiredDate}
           />
           <CardOwnerInput //
             cardOwner={cardOwner}
             setCardOwner={setCardOwner}
-            setValidCardOwner={setValidCardOwner}
           />
           <SecurityCodeInput
             securityCode={securityCode}
             setSecurityCode={setSecurityCode}
             isValidSecurityCode={isValidSecurityCode}
-            setValidSecurityCode={setValidSecurityCode}
           />
           <CardPasswordInput
             cardPassword={cardPassword}
             setCardPassword={setCardPassword}
             isValidCardPassword={isValidCardPassword}
-            setValidCardPassword={setValidCardPassword}
           />
           <Styled.ButtonContainer>
             {isValidAllInput && <Button styles={{ color: COLOR.MINT }}>다음</Button>}

@@ -14,16 +14,30 @@ const transparentInputStyles = {
   textAlign: 'center',
 };
 
-const isValidInput = securityCode => {
-  return securityCode.length === SECURITY_CODE_INPUT.LENGTH && !isNaN(securityCode);
-};
-
-const SecurityCodeInput = memo(({ securityCode, setSecurityCode, isValidSecurityCode, setValidSecurityCode }) => {
+const SecurityCodeInput = ({ securityCode, setSecurityCode, isValidSecurityCode }) => {
   const [isModalOpened, setModalOpen] = useState(false);
+  const [pressedKeyList, setPressedKeyList] = useState([]);
 
   useEffect(() => {
-    setValidSecurityCode(isValidInput(securityCode));
-  }, [setValidSecurityCode, securityCode]);
+    const lastPressedKey = pressedKeyList.slice(-1)[0] || '';
+
+    switch (lastPressedKey) {
+      case '확인':
+        setModalOpen(false);
+
+        break;
+      case '전체삭제':
+        setSecurityCode('');
+
+        break;
+      default:
+        securityCode.length < SECURITY_CODE_INPUT.LENGTH
+          ? setSecurityCode(prevState => prevState + lastPressedKey)
+          : setModalOpen(false);
+
+        break;
+    }
+  }, [pressedKeyList]);
 
   return (
     <>
@@ -45,22 +59,16 @@ const SecurityCodeInput = memo(({ securityCode, setSecurityCode, isValidSecurity
         </Styled.Container>
       </div>
       {isModalOpened && (
-        <VirtualKeyboardModal
-          closeModal={() => setModalOpen(false)}
-          currentInput="securityCode"
-          state={securityCode}
-          setState={setSecurityCode}
-        />
+        <VirtualKeyboardModal closeModal={() => setModalOpen(false)} setPressedKeyList={setPressedKeyList} />
       )}
     </>
   );
-});
+};
 
 SecurityCodeInput.propTypes = {
   securityCode: PropTypes.string.isRequired,
   setSecurityCode: PropTypes.func.isRequired,
   isValidSecurityCode: PropTypes.bool.isRequired,
-  setValidSecurityCode: PropTypes.func.isRequired,
 };
 
-export default SecurityCodeInput;
+export default memo(SecurityCodeInput);
