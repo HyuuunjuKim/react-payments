@@ -40,21 +40,28 @@ const CardCreationCompletePage = ({ setCurrentPage, newCardInfo, setCardList }) 
     }
   }, []);
 
-  const handleNewCardSubmit = async e => {
+  const handleCardSubmit = async e => {
     e.preventDefault();
 
     const content = { ...newCardInfo, cardNickName };
 
-    const response = state.targetCardId
-      ? await cardListRef.doc(state.targetCardId).update(content) // 기존 정보 수정
-      : await cardListRef.add(content); // 새로 추가
+    if (state.targetCardId) {
+      // update
+      await cardListRef.doc(state.targetCardId).update(content);
 
-    state.targetCardId ? alert(ALERT_MESSAGE.SUCCECC_CARD_UPDATE) : alert(ALERT_MESSAGE.SUCCECC_CARD_CREATE);
+      setCardList(prevState => [
+        ...prevState.filter(card => card.id !== state.targetCardId),
+        { id: state.targetCardId, content },
+      ]);
+      alert(ALERT_MESSAGE.SUCCECC_CARD_UPDATE);
+    } else {
+      // create
+      const response = await cardListRef.add(content);
 
-    setCardList(prevState => [
-      ...prevState.filter(card => card.id !== state.targetCardId),
-      { id: state.targetCardId || response.id, content },
-    ]);
+      setCardList(prevState => [...prevState, { id: response.id, content }]);
+      alert(ALERT_MESSAGE.SUCCECC_CARD_CREATE);
+    }
+
     actions.setTargetCardId('');
     setCurrentPage(PAGE.CARD_LIST);
   };
@@ -72,7 +79,7 @@ const CardCreationCompletePage = ({ setCurrentPage, newCardInfo, setCardList }) 
           cardExpiredDate,
         }}
       />
-      <form onSubmit={handleNewCardSubmit}>
+      <form onSubmit={handleCardSubmit}>
         <Styled.InputContainer>
           <TransparentInput
             value={cardNickName}

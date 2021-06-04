@@ -24,11 +24,10 @@ const App = () => {
   useEffect(() => {
     const getAllData = async () => {
       const snapshot = await cardListRef.get();
-      let cards = [];
 
       if (snapshot.empty) return;
 
-      snapshot.forEach(doc => cards.push({ id: doc.id, content: doc.data() }));
+      const cards = snapshot.docs.map(doc => ({ id: doc.id, content: doc.data() }));
       setCardList(cards);
     };
 
